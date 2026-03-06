@@ -32,7 +32,9 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_BASE: /${{ github.event.repository.name }}/
+          # User site (*.github.io) → base '/' for root URL
+          # Project site → base './' so assets resolve relative to /repo-name/
+          VITE_BASE: ${{ endsWith(github.event.repository.name, '.github.io') && '/' || './' }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -43,9 +45,12 @@ jobs:
           path: ./dist
 
   deploy:
-    environment: github-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to GitHub Pages
+      - id: deployment
+        name: Deploy to GitHub Pages
         uses: actions/deploy-pages@4
